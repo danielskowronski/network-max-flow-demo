@@ -99,9 +99,49 @@ namespace MaxFlowDemo
             redraw();
         }
 
+        private void addEdge(Graph g, string source, string target, float maxFlow)
+        {
+            Edge e;
+            e = new Edge(graph.FindNode(source), graph.FindNode(target), ConnectionToGraph.Connected);
+            e.UserData = new EdgeData();
+            ((EdgeData)(e.UserData)).maxFlow = ((EdgeData)(e.UserData)).currFlow = maxFlow;
+            e.LabelText = ((EdgeData)(e.UserData)).ToString();
+        }
+        private void addNode(Graph g, string label)
+        {
+            g.AddNode(label);
+            g.FindNode(label).UserData = new NodeData();
+        }
         private void button3_Click(object sender, System.EventArgs e)
         {
+            //demo1
+            addNode(graph, "s");
+            addNode(graph, "a");
+            addNode(graph, "b");
+            addNode(graph, "c");
+            addNode(graph, "d");
+            addNode(graph, "e");
+            addNode(graph, "t");
 
+            addEdge(graph, "s", "a", 9);
+            addEdge(graph, "s", "d", 9);
+            addEdge(graph, "a", "b", 7);
+            addEdge(graph, "a", "c", 3);
+            addEdge(graph, "b", "t", 6);
+            addEdge(graph, "b", "c", 4);
+            addEdge(graph, "c", "t", 9);
+            addEdge(graph, "c", "e", 2);
+            addEdge(graph, "d", "c", 3);
+            addEdge(graph, "d", "e", 6);
+            addEdge(graph, "e", "t", 8);
+
+            reloadEdgesCombobox();
+            reloadNodesCombobox();
+
+            comboBox_selectSource.SelectedItem = graph.FindNode("s");
+            comboBox_selectTarget.SelectedItem = graph.FindNode("t");
+
+            redraw();
         }
 
         private void button4_Click(object sender, System.EventArgs e)
@@ -131,7 +171,7 @@ namespace MaxFlowDemo
             }
             if (comboBox_newEdgeSrc.SelectedItem == comboBox_newEdgeTrgt.SelectedItem)
             {
-                MessageBox.Show("Pętla jednowierzchołkowa nie ma sensu!");
+                MessageBox.Show("Pętle są niedozwolone w sieci przepływowej!");
                 return;
             }
 
@@ -156,6 +196,14 @@ namespace MaxFlowDemo
             reloadEdgesCombobox();
             redraw();
         }
+
+        private void reloadLabels()
+        {
+            foreach (Edge e in graph.Edges)
+            {
+                e.LabelText = ((EdgeData)(e.UserData)).ToString();
+            }
+        }
         /* ------------------------------------------------------------------------------------------------------- */
 
         void FordFulkersonAlgo(Node nodeSource, Node nodeTerminal)
@@ -165,15 +213,17 @@ namespace MaxFlowDemo
 
             while (path != null && path.Count > 0)
             {
+                reloadLabels();
+                //ta pętla to kolejne kroki zmieniania się grafu - zapisać przed obliczeniami stan w tablicy, obsłużyć przerywanie (zawieszanie - mogą być dialogboxy zawieszące tego while'a) i sterowanie - zmiana zmiennych na takie z pamięci
                 var minCapacity = float.MaxValue;
                 foreach (var edge in path)
                 {
-                    if ( ((EdgeData)(edge.UserData)).maxFlow < minCapacity)
-                        minCapacity = ((EdgeData)(edge.UserData)).maxFlow; // update
+                    if ( ((EdgeData)(edge.UserData)).currFlow < minCapacity)
+                        minCapacity = ((EdgeData)(edge.UserData)).currFlow;
                 }
 
-                if (minCapacity == float.MaxValue || minCapacity < 0)
-                    ;// throw new Exception("minCapacity " + minCapacity);
+                //if (minCapacity == float.MaxValue || minCapacity < 0)
+                //    ;// throw new Exception("minCapacity " + minCapacity);
 
                 AugmentPath(path, minCapacity);
                 flow += minCapacity;
@@ -189,7 +239,7 @@ namespace MaxFlowDemo
                 //var keyResidual =   //GetKey(edge.NodeTo.Id, edge.NodeFrom.Id);
                 //var edgeResidual =  new Edge //((EdgeData)(edge.UserData)). //Edges[keyResidual];
 
-                ((EdgeData)(edge.UserData)).maxFlow -= minCapacity;//.....
+                ((EdgeData)(edge.UserData)).currFlow -= minCapacity;//.....
                 //edgeResidual.Capacity += minCapacity;//our grah is indricted
             }
         }
@@ -210,11 +260,11 @@ namespace MaxFlowDemo
                 if (current.Id == target.Id)
                     return GetPath(current);
 
-                var nodeEdges = current.OutEdges;//  .NodeEdges;
+                var nodeEdges = current.OutEdges;
                 foreach (var edge in nodeEdges)
                 {
-                    var next = edge.TargetNode;// .NodeTo;
-                    var c = ((EdgeData)(edge.UserData)).maxFlow;//  GetCapacity(current, next);
+                    var next = edge.TargetNode;
+                    var c = ((EdgeData)(edge.UserData)).currFlow;
                     if (c > 0 && !discovered.Contains(next))
                     {
                         ((NodeData)(next.UserData)).TraverseParent = current;
@@ -230,8 +280,7 @@ namespace MaxFlowDemo
             var current = node;
             while (((NodeData)(current.UserData)).TraverseParent != null)
             {
-                //var key = GetKey(current.TraverseParent.Id, current.Id);
-                var edge = new Edge(((NodeData)(current.UserData)).TraverseParent, current, ConnectionToGraph.Connected);
+                var edge = new Edge(((NodeData)(current.UserData)).TraverseParent, current, ConnectionToGraph.Disconnected);
                 foreach (Edge e in ((NodeData)(current.UserData)).TraverseParent.OutEdges)
                 {
                     if (e.TargetNode == current) edge.UserData = e.UserData;
@@ -242,8 +291,20 @@ namespace MaxFlowDemo
             return path;
         }
         /* ------------------------------------------------------------------------------------------------------- */
+
         private void button_calc_Click(object sender, System.EventArgs e)
         {
+            if (srcKey == "" || trgtKey == "")
+            {
+                MessageBox.Show("Ustaw najpierw źródło i ujście");
+                return;
+            }
+            if (srcKey == trgtKey )
+            {
+                MessageBox.Show("Źródło nie może być równe celowi");
+                return;
+            }
+
             FordFulkersonAlgo(graph.FindNode(srcKey), graph.FindNode(trgtKey));
             redraw();//
             int a = 0;
@@ -300,7 +361,7 @@ namespace MaxFlowDemo
                 return;
             }
             Edge edge = (Edge)(comboBox_changeCap.SelectedItem);
-            ((EdgeData)(edge.UserData)).maxFlow = cap;
+            ((EdgeData)(edge.UserData)).maxFlow = ((EdgeData)(edge.UserData)).currFlow = cap;
             //invalidate all curr flows here!
             edge.LabelText = edge.UserData.ToString();
             redraw();
