@@ -9,9 +9,13 @@ namespace MaxFlowDemo
 {
     public class EdgeData
     {
-        public int currFlow = 0;
-        public int maxFlow = 0;
+        public float currFlow = 0;
+        public float maxFlow = 0;
         public override string ToString() { return currFlow + "/" + maxFlow; }
+    }
+    public class NodeData
+    {
+        public Node TraverseParent;
     }
     public partial class Form1 : Form
     {
@@ -134,7 +138,7 @@ namespace MaxFlowDemo
             Edge edge = new Edge(graph.FindNode(comboBox_newEdgeSrc.SelectedItem.ToString()), graph.FindNode(comboBox_newEdgeTrgt.SelectedItem.ToString()), ConnectionToGraph.Connected);
             edge.UserData = new EdgeData();
             edge.LabelText = edge.UserData.ToString();
-            graph.AddPrecalculatedEdge(edge);
+        //    graph.AddPrecalculatedEdge(edge);
             comboBox_newEdgeSrc.SelectedItem = comboBox_newEdgeTrgt.SelectedItem = null;
             reloadEdgesCombobox();
             redraw();
@@ -152,10 +156,97 @@ namespace MaxFlowDemo
             reloadEdgesCombobox();
             redraw();
         }
+        /* ------------------------------------------------------------------------------------------------------- */
 
+        void FordFulkersonAlgo(Node nodeSource, Node nodeTerminal)
+        {
+            var flow = 0f;
+            var path = Bfs(nodeSource, nodeTerminal);
+
+            while (path != null && path.Count > 0)
+            {
+                var minCapacity = float.MaxValue;
+                foreach (var edge in path)
+                {
+                    if ( ((EdgeData)(edge.UserData)).maxFlow < minCapacity)
+                        minCapacity = ((EdgeData)(edge.UserData)).maxFlow; // update
+                }
+
+                if (minCapacity == float.MaxValue || minCapacity < 0)
+                    ;// throw new Exception("minCapacity " + minCapacity);
+
+                AugmentPath(path, minCapacity);
+                flow += minCapacity;
+
+                path = Bfs(nodeSource, nodeTerminal);
+            }
+            MessageBox.Show(flow.ToString());
+        }
+        void AugmentPath(IEnumerable<Edge> path, float minCapacity)
+        {
+            foreach (var edge in path)
+            {
+                //var keyResidual =   //GetKey(edge.NodeTo.Id, edge.NodeFrom.Id);
+                //var edgeResidual =  new Edge //((EdgeData)(edge.UserData)). //Edges[keyResidual];
+
+                ((EdgeData)(edge.UserData)).maxFlow -= minCapacity;//.....
+                //edgeResidual.Capacity += minCapacity;//our grah is indricted
+            }
+        }
+        List<Edge> Bfs(Node root, Node target)
+        {
+            ((NodeData)(root.UserData)).TraverseParent = null;
+            ((NodeData)(target.UserData)).TraverseParent = null;
+
+            var queue = new Queue<Node>();
+            var discovered = new HashSet<Node>();
+            queue.Enqueue(root);
+
+            while (queue.Count > 0)
+            {
+                Node current = queue.Dequeue();
+                discovered.Add(current);
+
+                if (current.Id == target.Id)
+                    return GetPath(current);
+
+                var nodeEdges = current.OutEdges;//  .NodeEdges;
+                foreach (var edge in nodeEdges)
+                {
+                    var next = edge.TargetNode;// .NodeTo;
+                    var c = ((EdgeData)(edge.UserData)).maxFlow;//  GetCapacity(current, next);
+                    if (c > 0 && !discovered.Contains(next))
+                    {
+                        ((NodeData)(next.UserData)).TraverseParent = current;
+                        queue.Enqueue(next);
+                    }
+                }
+            }
+            return null; 
+        }
+        List<Edge> GetPath(Node node)
+        {
+            var path = new List<Edge>();
+            var current = node;
+            while (((NodeData)(current.UserData)).TraverseParent != null)
+            {
+                //var key = GetKey(current.TraverseParent.Id, current.Id);
+                var edge = new Edge(((NodeData)(current.UserData)).TraverseParent, current, ConnectionToGraph.Connected);
+                foreach (Edge e in ((NodeData)(current.UserData)).TraverseParent.OutEdges)
+                {
+                    if (e.TargetNode == current) edge.UserData = e.UserData;
+                }
+                path.Add(edge);
+                current = ((NodeData)(current.UserData)).TraverseParent;
+            }   
+            return path;
+        }
+        /* ------------------------------------------------------------------------------------------------------- */
         private void button_calc_Click(object sender, System.EventArgs e)
         {
-
+            FordFulkersonAlgo(graph.FindNode(srcKey), graph.FindNode(trgtKey));
+            redraw();//
+            int a = 0;
         }
 
         private void comboBox_selectSource_SelectedIndexChanged(object sender, System.EventArgs e)
@@ -218,6 +309,7 @@ namespace MaxFlowDemo
         private void button_newNode_Click(object sender, System.EventArgs e)
         {
             graph.AddNode(textBox_newNodeName.Text);
+            graph.FindNode(textBox_newNodeName.Text).UserData = new NodeData();
             textBox_newNodeName.Text = "";
             reloadNodesCombobox();
             redraw();
