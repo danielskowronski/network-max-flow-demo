@@ -13,6 +13,7 @@ namespace MaxFlowDemo
         {
             var flow = 0f;
             var path = Bfs(nodeSource, nodeTerminal);
+            List<AlgoState> steps = new List<AlgoState>(); AlgoState cas = new AlgoState();
 
             while (path != null && path.Count > 0)
             {
@@ -38,14 +39,28 @@ namespace MaxFlowDemo
                 }
                 redraw();
                 DialogResult dr = MessageBox.Show("pauza\n\nYes=kontynuuj, No=wstecz o jeden krok", "pauza", MessageBoxButtons.YesNo);
-                //implement dr parsing!!!
-                //ta pętla to kolejne kroki zmieniania się grafu - zapisać przed obliczeniami stan w tablicy, obsłużyć przerywanie (zawieszanie - mogą być dialogboxy zawieszące tego while'a) i sterowanie - zmiana zmiennych na takie z pamięci
-
-                path = Bfs(nodeSource, nodeTerminal);
+                if (dr == DialogResult.Yes) {
+                    cas.g = graph; cas.p = path; steps.Add(cas); 
+                    path = Bfs(nodeSource, nodeTerminal);
+                }
+                else if (dr == DialogResult.No)
+                {
+                    if (steps.Count < 1)
+                    {
+                        MessageBox.Show("Nie można sie cofnąć!");
+                    }
+                    else { 
+                        cas = steps[steps.Count - 1];
+                        steps.RemoveAt(steps.Count - 1);
+                        graph = cas.g; path = cas.p;
+                        continue;
+                    }
+                }
             }
+
             clearColors();
             reloadLabels();
-            MessageBox.Show("Maksymalny przepływ wynosi "+flow.ToString());
+            MessageBox.Show("Maksymalny przepływ wynosi: "+flow.ToString());
         }
         void AugmentPath(IEnumerable<Edge> path, float minCapacity)
         {

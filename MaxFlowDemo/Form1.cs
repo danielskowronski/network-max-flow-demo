@@ -105,6 +105,7 @@ namespace MaxFlowDemo
         private void button3_Click(object sender, System.EventArgs e)
         {
             //demo1 - graf z http://eduinf.waw.pl/inf/alg/001_search/0146.php
+            button2_Click(sender, e);
 
             addNode(graph, "s");
             addNode(graph, "a");
@@ -138,6 +139,7 @@ namespace MaxFlowDemo
         private void button4_Click(object sender, System.EventArgs e)
         {
             //demo2
+            button2_Click(sender, e);
 
             addNode(graph, "s");
             addNode(graph, "a");
@@ -239,8 +241,7 @@ namespace MaxFlowDemo
             }
 
             FordFulkersonAlgo(graph.FindNode(srcKey), graph.FindNode(trgtKey));
-            redraw();//
-            int a = 0;
+            redraw();
         }
 
         private void comboBox_selectSource_SelectedIndexChanged(object sender, System.EventArgs e)
