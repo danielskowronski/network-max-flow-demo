@@ -137,7 +137,25 @@ namespace MaxFlowDemo
 
         private void button4_Click(object sender, System.EventArgs e)
         {
+            //demo2
 
+            addNode(graph, "s");
+            addNode(graph, "a");
+            addNode(graph, "b");
+            addNode(graph, "t");
+
+            addEdge(graph, "s", "a", 4);
+            addEdge(graph, "s", "b", 5);
+            addEdge(graph, "a", "t", 5);
+            addEdge(graph, "b", "t", 4);
+
+            reloadEdgesCombobox();
+            reloadNodesCombobox();
+
+            comboBox_selectSource.SelectedItem = graph.FindNode("s");
+            comboBox_selectTarget.SelectedItem = graph.FindNode("t");
+
+            redraw();
         }
 
         private void button_delNode_Click(object sender, System.EventArgs e)

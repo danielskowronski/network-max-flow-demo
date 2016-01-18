@@ -33,17 +33,14 @@ namespace MaxFlowDemo
 
                 path = Bfs(nodeSource, nodeTerminal);
             }
+            reloadLabels();
             MessageBox.Show(flow.ToString());
         }
         void AugmentPath(IEnumerable<Edge> path, float minCapacity)
         {
             foreach (var edge in path)
             {
-                //var keyResidual =   //GetKey(edge.NodeTo.Id, edge.NodeFrom.Id);
-                //var edgeResidual =  new Edge //((EdgeData)(edge.UserData)). //Edges[keyResidual];
-
-                ((EdgeData)(edge.UserData)).currFlow -= minCapacity;//.....
-                //edgeResidual.Capacity += minCapacity;//our grah is indricted
+                ((EdgeData)(edge.UserData)).currFlow -= minCapacity;
             }
         }
         List<Edge> Bfs(Node root, Node target)
