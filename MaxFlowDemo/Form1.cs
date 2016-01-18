@@ -71,7 +71,7 @@ namespace MaxFlowDemo
             if (!loaded) return;
 
             Form s = (Form)(sender);
-            gViewer.Width = s.Width - 100;
+            gViewer.Width = s.Width - 160;
         }
 
         private void button_redraw_Click(object sender, System.EventArgs e)
@@ -170,6 +170,7 @@ namespace MaxFlowDemo
             graph.RemoveNode(graph.FindNode(comboBox_delNode.SelectedItem.ToString()));
             comboBox_delNode.SelectedItem = null;
             reloadNodesCombobox();
+            invalidateFlow();
             redraw();
         }
 
@@ -189,9 +190,9 @@ namespace MaxFlowDemo
             Edge edge = new Edge(graph.FindNode(comboBox_newEdgeSrc.SelectedItem.ToString()), graph.FindNode(comboBox_newEdgeTrgt.SelectedItem.ToString()), ConnectionToGraph.Connected);
             edge.UserData = new EdgeData();
             edge.LabelText = edge.UserData.ToString();
-        //    graph.AddPrecalculatedEdge(edge);
             comboBox_newEdgeSrc.SelectedItem = comboBox_newEdgeTrgt.SelectedItem = null;
             reloadEdgesCombobox();
+            invalidateFlow();
             redraw();
         }
 
@@ -205,6 +206,7 @@ namespace MaxFlowDemo
             graph.RemoveEdge((Edge)(comboBox_delEdge.SelectedItem));
             comboBox_delEdge.SelectedItem = null;
             reloadEdgesCombobox();
+            invalidateFlow();
             redraw();
         }
 
@@ -222,9 +224,12 @@ namespace MaxFlowDemo
                 e.Attr.Color = Color.Black;
             }
         }
-        private void blockUI(bool state)
+        private void invalidateFlow()
         {
-            //TODO - block for time of algo - prevent network manipulation
+            foreach (Edge e in graph.Edges)
+            {
+                ((EdgeData)(e.UserData)).currFlow = ((EdgeData)(e.UserData)).maxFlow;
+            }
         }
 
         private void button_calc_Click(object sender, System.EventArgs e)
@@ -259,6 +264,7 @@ namespace MaxFlowDemo
             srcKey = comboBox_selectSource.SelectedItem.ToString();
             n = (Node)(comboBox_selectSource.SelectedItem);
             n.Attr.Shape = Shape.House; n.Attr.Color = Color.Blue;
+            invalidateFlow();
             redraw();
         }
 
@@ -277,6 +283,7 @@ namespace MaxFlowDemo
             trgtKey = comboBox_selectTarget.SelectedItem.ToString();
             n = (Node)(comboBox_selectTarget.SelectedItem);
             n.Attr.Shape = Shape.Ellipse; n.Attr.Color = Color.Blue;
+            invalidateFlow();
             redraw();
         }
 
@@ -296,13 +303,14 @@ namespace MaxFlowDemo
             }
             Edge edge = (Edge)(comboBox_changeCap.SelectedItem);
             ((EdgeData)(edge.UserData)).maxFlow = ((EdgeData)(edge.UserData)).currFlow = cap;
-            //invalidate all curr flows here!
+            invalidateFlow();
             edge.LabelText = edge.UserData.ToString();
             redraw();
         }
 
         private void button_newNode_Click(object sender, System.EventArgs e)
         {
+            invalidateFlow();
             graph.AddNode(textBox_newNodeName.Text);
             graph.FindNode(textBox_newNodeName.Text).UserData = new NodeData();
             textBox_newNodeName.Text = "";

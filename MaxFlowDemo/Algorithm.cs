@@ -11,12 +11,16 @@ namespace MaxFlowDemo
     {
         void FordFulkersonAlgo(Node nodeSource, Node nodeTerminal)
         {
+            label_flow.Text = "Przepływ = 0";
+            invalidateFlow();
+
             var flow = 0f;
             var path = Bfs(nodeSource, nodeTerminal);
             List<AlgoState> steps = new List<AlgoState>(); AlgoState cas = new AlgoState();
 
             while (path != null && path.Count > 0)
             {
+                label_flow.Text = "Przepływ = " + flow;
                 var minCapacity = float.MaxValue;
                 foreach (var edge in path)
                 {
@@ -37,8 +41,9 @@ namespace MaxFlowDemo
                         //dirty code written without understanding Graph class - fixme!
                     }
                 }
+                label_flow.Text = "Przepływ = " + flow;
                 redraw();
-                DialogResult dr = MessageBox.Show("pauza\n\nYes=kontynuuj, No=wstecz o jeden krok", "pauza", MessageBoxButtons.YesNo);
+                DialogResult dr = MessageBox.Show("Tak=kontynuuj, Nie=wstecz o jeden krok", "pauza", MessageBoxButtons.YesNo);
                 if (dr == DialogResult.Yes) {
                     cas.g = graph; cas.p = path; steps.Add(cas); 
                     path = Bfs(nodeSource, nodeTerminal);
@@ -53,6 +58,7 @@ namespace MaxFlowDemo
                         cas = steps[steps.Count - 1];
                         steps.RemoveAt(steps.Count - 1);
                         graph = cas.g; path = cas.p;
+                        label_flow.Text = "Przepływ = " + flow;
                         continue;
                     }
                 }
