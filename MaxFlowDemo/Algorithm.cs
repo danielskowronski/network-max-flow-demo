@@ -16,8 +16,6 @@ namespace MaxFlowDemo
 
             while (path != null && path.Count > 0)
             {
-                reloadLabels();
-                //ta pętla to kolejne kroki zmieniania się grafu - zapisać przed obliczeniami stan w tablicy, obsłużyć przerywanie (zawieszanie - mogą być dialogboxy zawieszące tego while'a) i sterowanie - zmiana zmiennych na takie z pamięci
                 var minCapacity = float.MaxValue;
                 foreach (var edge in path)
                 {
@@ -25,16 +23,29 @@ namespace MaxFlowDemo
                         minCapacity = ((EdgeData)(edge.UserData)).currFlow;
                 }
 
-                //if (minCapacity == float.MaxValue || minCapacity < 0)
-                //    ;// throw new Exception("minCapacity " + minCapacity);
-
                 AugmentPath(path, minCapacity);
                 flow += minCapacity;
 
+                clearColors();
+                reloadLabels();
+                foreach (Edge e in path)
+                {
+                    foreach (Edge e2 in graph.Edges)
+                    {
+                        if (e2.Source == e.Source && e2.Target == e.Target) e2.Attr.Color = Color.Red;
+                        //dirty code written without understanding Graph class - fixme!
+                    }
+                }
+                redraw();
+                DialogResult dr = MessageBox.Show("pauza\n\nYes=kontynuuj, No=wstecz o jeden krok", "pauza", MessageBoxButtons.YesNo);
+                //implement dr parsing!!!
+                //ta pętla to kolejne kroki zmieniania się grafu - zapisać przed obliczeniami stan w tablicy, obsłużyć przerywanie (zawieszanie - mogą być dialogboxy zawieszące tego while'a) i sterowanie - zmiana zmiennych na takie z pamięci
+
                 path = Bfs(nodeSource, nodeTerminal);
             }
+            clearColors();
             reloadLabels();
-            MessageBox.Show(flow.ToString());
+            MessageBox.Show("Maksymalny przepływ wynosi "+flow.ToString());
         }
         void AugmentPath(IEnumerable<Edge> path, float minCapacity)
         {

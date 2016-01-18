@@ -213,6 +213,17 @@ namespace MaxFlowDemo
                 e.LabelText = ((EdgeData)(e.UserData)).ToString();
             }
         }
+        private void clearColors()
+        {
+            foreach (Edge e in graph.Edges)
+            {
+                e.Attr.Color = Color.Black;
+            }
+        }
+        private void blockUI(bool state)
+        {
+            //TODO - block for time of algo - prevent network manipulation
+        }
 
         private void button_calc_Click(object sender, System.EventArgs e)
         {
